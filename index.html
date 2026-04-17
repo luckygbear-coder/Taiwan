@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>無聲走廊</title>
+
+<style>
+body {
+  margin:0;
+  background:black;
+  color:white;
+  font-family:sans-serif;
+  overflow:hidden;
+}
+
+.bg {
+  position:fixed;
+  width:100%;
+  height:100%;
+  background: linear-gradient(to bottom, #111, #000);
+  animation: flicker 3s infinite;
+}
+
+@keyframes flicker {
+  0%{opacity:1;}
+  50%{opacity:0.92;}
+  100%{opacity:1;}
+}
+
+.container {
+  position:relative;
+  z-index:2;
+  padding:30px;
+  text-align:center;
+}
+
+.scene {
+  margin-top:60px;
+  font-size:20px;
+  line-height:1.6;
+  min-height:120px;
+}
+
+button {
+  margin-top:20px;
+  padding:14px;
+  width:80%;
+  max-width:300px;
+  border:none;
+  background:#b5122b;
+  color:white;
+  font-size:16px;
+}
+
+.level {
+  margin-top:10px;
+  color:#888;
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg"></div>
+
+<div class="container">
+  <h1>無聲走廊</h1>
+  <div class="level">進度：<span id="level">1</span> / 12</div>
+
+  <div class="scene" id="scene"></div>
+
+  <button onclick="choose(true)">這是正常的</button>
+  <button onclick="choose(false)">有異常</button>
+</div>
+
+<script>
+let level = 1;
+const total = 12;
+
+const pool = [
+  {text:"牆上貼著普通公告。", anomaly:false},
+  {text:"公告寫著：請配合調查單位。", anomaly:true},
+  {text:"走廊安靜無聲。", anomaly:false},
+  {text:"牆上多了一張人臉照片，標記『已處理』。", anomaly:true},
+  {text:"地上有一張舊報紙。", anomaly:false},
+  {text:"報紙標題：思想需接受審查。", anomaly:true},
+  {text:"燈光微微閃爍。", anomaly:false},
+  {text:"牆上寫著：不要談論今天的事。", anomaly:true},
+  {text:"你聽到遠處腳步聲。", anomaly:false},
+  {text:"門上寫著：進入者不得離開。", anomaly:true},
+  {text:"走廊似乎無限延伸。", anomaly:false},
+  {text:"牆上貼著一張燃燒過的雜誌封面。", anomaly:true}
+];
+
+let currentScene = null;
+
+let audioCtx;
+function startAudio(){
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  let osc = audioCtx.createOscillator();
+  let gain = audioCtx.createGain();
+
+  osc.type = "sine";
+  osc.frequency.value = 40;
+  gain.gain.value = 0.02;
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+}
+
+function nextScene(){
+  currentScene = pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById("scene").innerText = currentScene.text;
+  document.getElementById("level").innerText = level;
+}
+
+function choose(answer){
+  if(!audioCtx) startAudio();
+
+  let correct = currentScene.anomaly;
+
+  if(answer === !correct){
+    level++;
+
+    document.body.style.background = "white";
+    setTimeout(()=>document.body.style.background="black",100);
+
+    if(level > total){
+      endGame();
+    }else{
+      nextScene();
+    }
+
+  }else{
+    failEffect();
+  }
+}
+
+function failEffect(){
+  document.body.style.background = "red";
+  if(navigator.vibrate){
+    navigator.vibrate(200);
+  }
+
+  setTimeout(()=>{
+    alert("你做出了錯誤的判斷…一切重來");
+    level = 1;
+    nextScene();
+    document.body.style.background = "black";
+  },300);
+}
+
+function endGame(){
+  document.body.innerHTML = `
+    <div style="padding:40px;text-align:center;">
+      <h1>你走出了走廊</h1>
+      <p>但你開始懷疑，曾經的『正常』是否只是被塑造的。</p>
+      <button onclick="location.reload()">再玩一次</button>
+    </div>
+  `;
+}
+
+nextScene();
+</script>
+
+</body>
+</html>
