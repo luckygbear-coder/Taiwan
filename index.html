@@ -6,233 +6,336 @@
 <title>EXIT：民主之路</title>
 
 <style>
-    body {
-        margin: 0;
-        font-family: "Noto Sans TC", sans-serif;
-        background: #0b0f14;
-        color: #eaeaea;
-        overflow: hidden;
-    }
-
-    .screen {
-        display: none;
-        height: 100vh;
-        padding: 24px;
-        box-sizing: border-box;
-    }
-
-    .active {
-        display: block;
-    }
-
-    h1 {
-        color: #ffffff;
-        font-size: 22px;
-    }
-
-    p {
-        line-height: 1.7;
-        color: #cfcfcf;
-    }
-
-    .btn {
-        display: block;
-        margin: 12px 0;
-        padding: 14px;
-        background: #1c2a38;
-        border: 1px solid #2d3f55;
-        color: white;
-        border-radius: 10px;
-        text-align: center;
-        cursor: pointer;
-    }
-
-    .btn:hover {
-        background: #26384b;
-    }
-
-    .danger {
-        color: #ff6b6b;
-    }
-
-    .title {
-        font-size: 26px;
-        font-weight: bold;
-        margin-bottom: 20px;
-    }
-
-    .small {
-        font-size: 13px;
-        color: #9aa4ad;
-    }
-
+body{
+    margin:0;
+    font-family: "Noto Sans TC", sans-serif;
+    background:#0b0f14;
+    color:#eaeaea;
+}
+.screen{display:none;padding:22px;}
+.active{display:block;}
+.title{font-size:24px;font-weight:bold;margin-bottom:12px;}
+.btn{
+    background:#1c2a38;
+    border:1px solid #2d3f55;
+    padding:12px;
+    margin:10px 0;
+    border-radius:10px;
+    cursor:pointer;
+}
+.btn:hover{background:#26384b;}
+.small{font-size:12px;color:#9aa4ad;}
+.danger{color:#ff6b6b;}
 </style>
 </head>
 
 <body>
 
-<!-- 🧠 開場故事 -->
+<!-- INTRO -->
 <div id="intro" class="screen active">
     <div class="title">EXIT：民主之路</div>
 
     <p>
-        你原本只是一個普通人。<br><br>
+        你在一間舊書店打開一本沒有標題的書。<br><br>
 
-        某一天，你在一間舊書店裡翻到一本沒有標題的筆記本。<br>
-        當你打開的瞬間，整個空間開始崩裂。
+        下一秒，你被吸入歷史裂縫之中。
     </p>
 
     <p class="danger">
-        「你不是在讀歷史，而是被歷史讀取。」
+        「你不是在看歷史，是被歷史審判。」
     </p>
 
     <p>
-        當你再次睜開眼，你已不在現代。<br>
-        你被困在不同的時代碎片中——228、戒嚴、學運、選舉現場……<br><br>
-
-        每一次選擇，都會改變你的存在方式。<br>
-        而錯誤的選擇，會讓你被這個時代「消除」。
+        你的任務只有一個：<br>
+        <b>找出回到現代的出口（EXIT）。</b>
     </p>
 
-    <p>
-        你唯一的目的只有一個：<br>
-        <b>找出回到現代的「出口（EXIT）」。</b>
-    </p>
-
-    <div class="btn" onclick="goRoleSelect()">
-        ▶ 開始穿越
-    </div>
+    <div class="btn" onclick="goRole()">開始</div>
 </div>
 
-<!-- 🧍 角色選擇 -->
+<!-- ROLE -->
 <div id="role" class="screen">
-    <div class="title">選擇你的身份</div>
+    <div class="title">選擇身份</div>
 
-    <div class="btn" onclick="selectRole('民眾')">
-        👤 民眾<br><span class="small">生存優先｜資訊有限｜容易被波及</span>
-    </div>
-
-    <div class="btn" onclick="selectRole('學生')">
-        🎓 學生<br><span class="small">思想敏感｜易受監控｜參與改革</span>
-    </div>
-
-    <div class="btn" onclick="selectRole('記者')">
-        📰 記者<br><span class="small">追求真相｜資訊核心｜高風險職業</span>
-    </div>
+    <div class="btn" onclick="selectRole('民眾')">👤 民眾</div>
+    <div class="btn" onclick="selectRole('學生')">🎓 學生</div>
+    <div class="btn" onclick="selectRole('記者')">📰 記者</div>
 </div>
 
-<!-- 📍 遊戲主畫面 -->
+<!-- GAME -->
 <div id="game" class="screen">
-    <div class="title">歷史片段</div>
+    <div class="title">歷史裂縫</div>
 
     <p id="roleText"></p>
-
-    <p id="eventText">
-        你站在一個陌生的歷史場景中……<br>
-        空氣中瀰漫著不安。
-    </p>
-
+    <p id="eventText"></p>
     <div id="choices"></div>
-
-    <p class="small" id="status"></p>
+    <p id="status" class="small"></p>
 </div>
 
 <script>
-let currentRole = "";
-let step = 0;
 
-// 🧭 進入角色選擇
-function goRoleSelect(){
-    switchScreen("role");
-}
+let role="";
+let step=0;
+let corruption=0; //歷史污染值
 
-// 🎭 選擇角色
-function selectRole(role){
-    currentRole = role;
-    step = 0;
-
-    document.getElementById("roleText").innerHTML =
-        "你目前身份：" + role;
-
-    switchScreen("game");
-    loadEvent();
-}
-
-// 📍 事件系統（先做3關示範，可擴展18關）
+// 🧠 18關資料（含角色差異）
 const events = [
-    {
-        text: "【1947｜街頭動盪】你看到有人被軍警帶走，群眾陷入恐慌。",
-        choices: [
-            { text: "幫忙傳遞消息", result: "你被列入觀察名單", next: 1 },
-            { text: "離開現場", result: "你暫時安全，但錯過真相", next: 1 }
-        ]
-    },
-    {
-        text: "【1979｜集會現場】人群正在被驅散。",
-        choices: [
-            { text: "靠近了解事件", result: "你被誤認為參與者", next: 2 },
-            { text: "保持距離", result: "你安全但資訊斷裂", next: 2 }
-        ]
-    },
-    {
-        text: "【1990｜學運現場】學生正在討論是否佔領現場。",
-        choices: [
-            { text: "加入行動", result: "你被列入名單", next: "end" },
-            { text: "離開現場", result: "你錯過歷史轉折", next: "end" }
-        ]
-    }
+
+/* 1 228 */
+{
+text:"【1947｜228事件】街頭有人被帶走。",
+r:{
+民眾:[
+{t:"離開現場",r:"安全但失去資訊",n:1},
+{t:"幫忙傳遞消息",r:"被列管",n:1}
+],
+學生:[
+{t:"記錄事件",r:"被注意",n:1},
+{t:"保持沉默",r:"安全但麻木",n:1}
+],
+記者:[
+{t:"拍攝記錄",r:"資料被查封",n:1},
+{t:"不報導",r:"保住工作",n:1}
+]
+}
+},
+
+/* 2 白色恐怖 */
+{
+text:"【1950｜清鄉與檢舉潮】人人互相懷疑。",
+r:{
+民眾:[
+{t:"拒絕檢舉",r:"被懷疑",n:2},
+{t:"簽名自保",r:"鄰居被抓",n:2}
+],
+學生:[
+{t:"閱讀禁書",r:"思想異常紀錄",n:2},
+{t:"避免討論",r:"安全",n:2}
+],
+記者:[
+{t:"暗中採訪",r:"被監控",n:2},
+{t:"停止調查",r:"新聞安全",n:2}
+]
+}
+},
+
+/* 3 */
+{
+text:"【1960｜思想審查】書籍被禁。",
+r:{
+民眾:[
+{t:"偷看書",r:"被舉報",n:3},
+{t:"不看",r:"安全",n:3}
+],
+學生:[
+{t:"分享內容",r:"退學風險",n:3},
+{t:"沉默",r:"穩定",n:3}
+],
+記者:[
+{t:"報導禁書",r:"報社警告",n:3},
+{t:"不寫",r:"安全",n:3}
+]
+}
+},
+
+/* 4 */
+{
+text:"【1970｜校園監控】同學互相檢舉。",
+r:{
+民眾:[
+{t:"旁觀",r:"安全",n:4},
+{t:"協助舉報",r:"社會信用上升",n:4}
+],
+學生:[
+{t:"加入討論",r:"被記錄",n:4},
+{t:"遠離",r:"錯過思想",n:4}
+],
+記者:[
+{t:"報導校園",r:"被封稿",n:4},
+{t:"不寫",r:"安全",n:4}
+]
+}
+},
+
+/* 5 美麗島 */
+{
+text:"【1979｜美麗島事件】街頭衝突。",
+r:{
+民眾:[
+{t:"逃離",r:"安全",n:5},
+{t:"傳消息",r:"列管",n:5}
+],
+學生:[
+{t:"聲援",r:"被捕",n:5},
+{t:"不參加",r:"安全但沉默",n:5}
+],
+記者:[
+{t:"報導",r:"報社被查",n:5},
+{t:"隱藏",r:"安全",n:5}
+]
+}
+},
+
+/* 6 解嚴 */
+{
+text:"【1987｜解嚴前夕】體制鬆動。",
+r:{
+民眾:[
+{t:"關心政治",r:"正常",n:6},
+{t:"忽略",r:"錯過轉折",n:6}
+],
+學生:[
+{t:"參與討論",r:"進入名單",n:6},
+{t:"不參加",r:"安全",n:6}
+],
+記者:[
+{t:"追查真相",r:"壓力下降",n:6},
+{t:"保守報導",r:"安全",n:6}
+]
+}
+},
+
+/* 7～15（簡化但完整邏輯） */
+...Array.from({length:9},(_,i)=>({
+text:`【歷史片段 ${7+i}】政治與社會轉型中…`,
+r:{
+民眾:[
+{t:"觀察",r:"穩定",n:7+i},
+{t:"參與",r:"風險上升",n:7+i}
+],
+學生:[
+{t:"行動",r:"紀錄增加",n:7+i},
+{t:"退出",r:"安全但空白",n:7+i}
+],
+記者:[
+{t:"揭露",r:"壓力增加",n:7+i},
+{t:"避開",r:"安全",n:7+i}
+]
+}
+})),
+
+/* 16 太陽花 */
+{
+text:"【2014｜社會運動】立法院外集結。",
+r:{
+民眾:[
+{t:"圍觀",r:"安全",n:16},
+{t:"加入",r:"紀錄增加",n:16}
+],
+學生:[
+{t:"進入現場",r:"被關注",n:16},
+{t:"離開",r:"錯過歷史",n:16}
+],
+記者:[
+{t:"直播",r:"壓力",n:16},
+{t:"不報",r:"安全",n:16}
+]
+}
+},
+
+/* 17 記憶 */
+{
+text:"【歷史記憶崩壞】系統開始改寫內容。",
+r:{
+民眾:[
+{t:"相信官方",r:"污染上升",n:17},
+{t:"質疑",r:"危險",n:17}
+],
+學生:[
+{t:"保存資料",r:"被標記",n:17},
+{t:"刪除",r:"安全",n:17}
+],
+記者:[
+{t:"公開真相",r:"封鎖",n:17},
+{t:"妥協",r:"安全",n:17}
+]
+}
+},
+
+/* 18 EXIT */
+{
+text:"【EXIT門】你看到現代的光。",
+r:{
+民眾:[
+{t:"走出去",r:"通關",n:"end"},
+{t:"回頭",r:"回到起點",n:0}
+],
+學生:[
+{t:"走出去",r:"通關",n:"end"},
+{t:"猶豫",r:"回到起點",n:0}
+],
+記者:[
+{t:"帶著資料離開",r:"真結局",n:"end"},
+{t:"放棄",r:"回到起點",n:0}
+]
+}
+}
+
 ];
 
-// 🧩 載入事件
-function loadEvent(){
-    if(step === "end"){
-        document.getElementById("eventText").innerHTML =
-            "你感覺世界開始崩裂……<br>但某個「出口」仍未出現。";
-
-        document.getElementById("choices").innerHTML =
-            "<div class='btn' onclick='restart()'>↺ 回到起點</div>";
-        return;
-    }
-
-    let ev = events[step];
-
-    document.getElementById("eventText").innerHTML = ev.text;
-
-    let html = "";
-    ev.choices.forEach(c => {
-        html += `<div class="btn" onclick="choose('${c.result}', '${c.next}')">
-                    ${c.text}
-                 </div>`;
-    });
-
-    document.getElementById("choices").innerHTML = html;
+// UI
+function goRole(){
+document.getElementById("intro").classList.remove("active");
+document.getElementById("role").classList.add("active");
 }
 
-// 🧠 選擇結果
-function choose(result, next){
-    document.getElementById("status").innerHTML =
-        "結果：" + result;
-
-    setTimeout(() => {
-        step = next;
-        loadEvent();
-        document.getElementById("status").innerHTML = "";
-    }, 800);
+function selectRole(r){
+role=r;
+step=0;
+document.getElementById("role").classList.remove("active");
+document.getElementById("game").classList.add("active");
+document.getElementById("roleText").innerHTML="身份："+r;
+load();
 }
 
-// 🔁 重置
+function load(){
+
+if(step==="end"){
+document.getElementById("eventText").innerHTML=
+"你成功穿越回現代。<br><b>EXIT完成</b>";
+document.getElementById("choices").innerHTML=
+"<div class='btn' onclick='restart()'>重新開始</div>";
+return;
+}
+
+let ev=events[step];
+document.getElementById("eventText").innerHTML=ev.text;
+
+let list=ev.r[role];
+let html="";
+
+list.forEach(c=>{
+html+=`<div class='btn' onclick='choose(${c.n},\"${c.r}\")'>
+${c.t}
+</div>`;
+});
+
+document.getElementById("choices").innerHTML=html;
+}
+
+function choose(next,result){
+document.getElementById("status").innerText="結果："+result;
+
+if(result.includes("危險")||result.includes("封")||result.includes("捕")){
+corruption++;
+}
+
+setTimeout(()=>{
+if(corruption>=5){
+alert("📍歷史污染過高\n你被系統清除\n回到起點");
+restart();
+return;
+}
+step=next;
+load();
+document.getElementById("status").innerText="";
+},600);
+}
+
 function restart(){
-    currentRole = "";
-    step = 0;
-    switchScreen("intro");
+location.reload();
 }
 
-// 📺 畫面切換
-function switchScreen(id){
-    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-}
 </script>
-
 </body>
 </html>
