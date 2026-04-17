@@ -2,180 +2,236 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>無聲走廊｜台灣歷史版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EXIT：民主之路</title>
 
 <style>
-body {
-  margin:0;
-  background:black;
-  color:white;
-  font-family:sans-serif;
-  overflow:hidden;
-}
+    body {
+        margin: 0;
+        font-family: "Noto Sans TC", sans-serif;
+        background: #0b0f14;
+        color: #eaeaea;
+        overflow: hidden;
+    }
 
-.bg {
-  position:fixed;
-  width:100%;
-  height:100%;
-  background: linear-gradient(to bottom, #111, #000);
-  animation: flicker 3s infinite;
-}
+    .screen {
+        display: none;
+        height: 100vh;
+        padding: 24px;
+        box-sizing: border-box;
+    }
 
-@keyframes flicker {
-  0%{opacity:1;}
-  50%{opacity:0.92;}
-  100%{opacity:1;}
-}
+    .active {
+        display: block;
+    }
 
-.container {
-  position:relative;
-  z-index:2;
-  padding:30px;
-  text-align:center;
-}
+    h1 {
+        color: #ffffff;
+        font-size: 22px;
+    }
 
-.scene {
-  margin-top:60px;
-  font-size:20px;
-  min-height:120px;
-}
+    p {
+        line-height: 1.7;
+        color: #cfcfcf;
+    }
 
-button {
-  margin-top:10px;
-  padding:12px;
-  width:80%;
-  max-width:300px;
-  border:none;
-  background:#b5122b;
-  color:white;
-}
+    .btn {
+        display: block;
+        margin: 12px 0;
+        padding: 14px;
+        background: #1c2a38;
+        border: 1px solid #2d3f55;
+        color: white;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+    }
 
-.infoBox {
-  margin-top:20px;
-  background:#222;
-  padding:12px;
-  border-radius:8px;
-  font-size:14px;
-  text-align:left;
-  display:none;
-}
+    .btn:hover {
+        background: #26384b;
+    }
 
-.level {
-  color:#888;
-}
+    .danger {
+        color: #ff6b6b;
+    }
+
+    .title {
+        font-size: 26px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .small {
+        font-size: 13px;
+        color: #9aa4ad;
+    }
+
 </style>
 </head>
 
 <body>
 
-<div class="bg"></div>
+<!-- 🧠 開場故事 -->
+<div id="intro" class="screen active">
+    <div class="title">EXIT：民主之路</div>
 
-<div class="container">
-  <h1>無聲走廊</h1>
-  <div class="level">進度：<span id="level">1</span> / 10</div>
+    <p>
+        你原本只是一個普通人。<br><br>
 
-  <div class="scene" id="scene"></div>
+        某一天，你在一間舊書店裡翻到一本沒有標題的筆記本。<br>
+        當你打開的瞬間，整個空間開始崩裂。
+    </p>
 
-  <button onclick="choose(true)">這是正常的</button>
-  <button onclick="choose(false)">有異常</button>
+    <p class="danger">
+        「你不是在讀歷史，而是被歷史讀取。」
+    </p>
 
-  <button onclick="toggleInfo()">📖 查看事件說明</button>
+    <p>
+        當你再次睜開眼，你已不在現代。<br>
+        你被困在不同的時代碎片中——228、戒嚴、學運、選舉現場……<br><br>
 
-  <div class="infoBox" id="info"></div>
+        每一次選擇，都會改變你的存在方式。<br>
+        而錯誤的選擇，會讓你被這個時代「消除」。
+    </p>
+
+    <p>
+        你唯一的目的只有一個：<br>
+        <b>找出回到現代的「出口（EXIT）」。</b>
+    </p>
+
+    <div class="btn" onclick="goRoleSelect()">
+        ▶ 開始穿越
+    </div>
+</div>
+
+<!-- 🧍 角色選擇 -->
+<div id="role" class="screen">
+    <div class="title">選擇你的身份</div>
+
+    <div class="btn" onclick="selectRole('民眾')">
+        👤 民眾<br><span class="small">生存優先｜資訊有限｜容易被波及</span>
+    </div>
+
+    <div class="btn" onclick="selectRole('學生')">
+        🎓 學生<br><span class="small">思想敏感｜易受監控｜參與改革</span>
+    </div>
+
+    <div class="btn" onclick="selectRole('記者')">
+        📰 記者<br><span class="small">追求真相｜資訊核心｜高風險職業</span>
+    </div>
+</div>
+
+<!-- 📍 遊戲主畫面 -->
+<div id="game" class="screen">
+    <div class="title">歷史片段</div>
+
+    <p id="roleText"></p>
+
+    <p id="eventText">
+        你站在一個陌生的歷史場景中……<br>
+        空氣中瀰漫著不安。
+    </p>
+
+    <div id="choices"></div>
+
+    <p class="small" id="status"></p>
 </div>
 
 <script>
-let level = 1;
-const total = 10;
+let currentRole = "";
+let step = 0;
 
-const pool = [
-  {
-    text:"公告寫著：請檢舉思想可疑的人。",
-    anomaly:true,
-    title:"白色恐怖",
-    short:"政府透過監控與檢舉制度控制人民思想。",
-    detail:"1949–1987年間，台灣進入戒嚴時期，許多人因思想或言論被監控、審問甚至失蹤。人民彼此猜疑，社會充滿恐懼。"
-  },
-  {
-    text:"牆上貼著一張被燒毀的雜誌封面。",
-    anomaly:true,
-    title:"鄭南榕事件",
-    short:"為了言論自由而犧牲。",
-    detail:"1989年，鄭南榕為捍衛100%言論自由，在遭逮捕前自焚身亡，成為台灣民主發展的重要象徵。"
-  },
-  {
-    text:"牆上貼著一家人的照片，但臉被劃掉。",
-    anomaly:true,
-    title:"林宅血案",
-    short:"政治暴力與未解懸案。",
-    detail:"1980年林義雄家中發生滅門血案，至今仍未完全釐清真相，被視為台灣歷史上的重大政治案件。"
-  },
-  {
-    text:"走廊安靜無聲。",
-    anomaly:false
-  },
-  {
-    text:"燈光微微閃爍。",
-    anomaly:false
-  }
+// 🧭 進入角色選擇
+function goRoleSelect(){
+    switchScreen("role");
+}
+
+// 🎭 選擇角色
+function selectRole(role){
+    currentRole = role;
+    step = 0;
+
+    document.getElementById("roleText").innerHTML =
+        "你目前身份：" + role;
+
+    switchScreen("game");
+    loadEvent();
+}
+
+// 📍 事件系統（先做3關示範，可擴展18關）
+const events = [
+    {
+        text: "【1947｜街頭動盪】你看到有人被軍警帶走，群眾陷入恐慌。",
+        choices: [
+            { text: "幫忙傳遞消息", result: "你被列入觀察名單", next: 1 },
+            { text: "離開現場", result: "你暫時安全，但錯過真相", next: 1 }
+        ]
+    },
+    {
+        text: "【1979｜集會現場】人群正在被驅散。",
+        choices: [
+            { text: "靠近了解事件", result: "你被誤認為參與者", next: 2 },
+            { text: "保持距離", result: "你安全但資訊斷裂", next: 2 }
+        ]
+    },
+    {
+        text: "【1990｜學運現場】學生正在討論是否佔領現場。",
+        choices: [
+            { text: "加入行動", result: "你被列入名單", next: "end" },
+            { text: "離開現場", result: "你錯過歷史轉折", next: "end" }
+        ]
+    }
 ];
 
-let currentScene = null;
-let showInfo = false;
+// 🧩 載入事件
+function loadEvent(){
+    if(step === "end"){
+        document.getElementById("eventText").innerHTML =
+            "你感覺世界開始崩裂……<br>但某個「出口」仍未出現。";
 
-function nextScene(){
-  currentScene = pool[Math.floor(Math.random()*pool.length)];
-  document.getElementById("scene").innerText = currentScene.text;
-  document.getElementById("level").innerText = level;
-  document.getElementById("info").style.display = "none";
-}
-
-function choose(answer){
-  let correct = currentScene.anomaly;
-
-  if(answer === !correct){
-    level++;
-    if(level > total){
-      endGame();
-    }else{
-      nextScene();
+        document.getElementById("choices").innerHTML =
+            "<div class='btn' onclick='restart()'>↺ 回到起點</div>";
+        return;
     }
-  }else{
-    alert("你忽略了異常…歷史再次重演");
-    level = 1;
-    nextScene();
-  }
+
+    let ev = events[step];
+
+    document.getElementById("eventText").innerHTML = ev.text;
+
+    let html = "";
+    ev.choices.forEach(c => {
+        html += `<div class="btn" onclick="choose('${c.result}', '${c.next}')">
+                    ${c.text}
+                 </div>`;
+    });
+
+    document.getElementById("choices").innerHTML = html;
 }
 
-function toggleInfo(){
-  if(!currentScene.title) return;
+// 🧠 選擇結果
+function choose(result, next){
+    document.getElementById("status").innerHTML =
+        "結果：" + result;
 
-  let box = document.getElementById("info");
-
-  if(box.style.display === "none"){
-    box.style.display = "block";
-    box.innerHTML = `
-      <h3>${currentScene.title}</h3>
-      <p><b>簡述：</b>${currentScene.short}</p>
-      <p><b>詳細：</b>${currentScene.detail}</p>
-    `;
-  }else{
-    box.style.display = "none";
-  }
+    setTimeout(() => {
+        step = next;
+        loadEvent();
+        document.getElementById("status").innerHTML = "";
+    }, 800);
 }
 
-function endGame(){
-  document.body.innerHTML = `
-    <div style="padding:40px;text-align:center;">
-      <h1>你離開了走廊</h1>
-      <p>但歷史從未真正消失，只是等待被遺忘。</p>
-      <button onclick="location.reload()">再玩一次</button>
-    </div>
-  `;
+// 🔁 重置
+function restart(){
+    currentRole = "";
+    step = 0;
+    switchScreen("intro");
 }
 
-nextScene();
+// 📺 畫面切換
+function switchScreen(id){
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+}
 </script>
 
 </body>
