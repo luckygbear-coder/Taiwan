@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>無聲走廊</title>
+<title>無聲走廊｜台灣歷史版</title>
 
 <style>
 body {
@@ -38,23 +38,30 @@ body {
 .scene {
   margin-top:60px;
   font-size:20px;
-  line-height:1.6;
   min-height:120px;
 }
 
 button {
-  margin-top:20px;
-  padding:14px;
+  margin-top:10px;
+  padding:12px;
   width:80%;
   max-width:300px;
   border:none;
   background:#b5122b;
   color:white;
-  font-size:16px;
+}
+
+.infoBox {
+  margin-top:20px;
+  background:#222;
+  padding:12px;
+  border-radius:8px;
+  font-size:14px;
+  text-align:left;
+  display:none;
 }
 
 .level {
-  margin-top:10px;
   color:#888;
 }
 </style>
@@ -66,98 +73,103 @@ button {
 
 <div class="container">
   <h1>無聲走廊</h1>
-  <div class="level">進度：<span id="level">1</span> / 12</div>
+  <div class="level">進度：<span id="level">1</span> / 10</div>
 
   <div class="scene" id="scene"></div>
 
   <button onclick="choose(true)">這是正常的</button>
   <button onclick="choose(false)">有異常</button>
+
+  <button onclick="toggleInfo()">📖 查看事件說明</button>
+
+  <div class="infoBox" id="info"></div>
 </div>
 
 <script>
 let level = 1;
-const total = 12;
+const total = 10;
 
 const pool = [
-  {text:"牆上貼著普通公告。", anomaly:false},
-  {text:"公告寫著：請配合調查單位。", anomaly:true},
-  {text:"走廊安靜無聲。", anomaly:false},
-  {text:"牆上多了一張人臉照片，標記『已處理』。", anomaly:true},
-  {text:"地上有一張舊報紙。", anomaly:false},
-  {text:"報紙標題：思想需接受審查。", anomaly:true},
-  {text:"燈光微微閃爍。", anomaly:false},
-  {text:"牆上寫著：不要談論今天的事。", anomaly:true},
-  {text:"你聽到遠處腳步聲。", anomaly:false},
-  {text:"門上寫著：進入者不得離開。", anomaly:true},
-  {text:"走廊似乎無限延伸。", anomaly:false},
-  {text:"牆上貼著一張燃燒過的雜誌封面。", anomaly:true}
+  {
+    text:"公告寫著：請檢舉思想可疑的人。",
+    anomaly:true,
+    title:"白色恐怖",
+    short:"政府透過監控與檢舉制度控制人民思想。",
+    detail:"1949–1987年間，台灣進入戒嚴時期，許多人因思想或言論被監控、審問甚至失蹤。人民彼此猜疑，社會充滿恐懼。"
+  },
+  {
+    text:"牆上貼著一張被燒毀的雜誌封面。",
+    anomaly:true,
+    title:"鄭南榕事件",
+    short:"為了言論自由而犧牲。",
+    detail:"1989年，鄭南榕為捍衛100%言論自由，在遭逮捕前自焚身亡，成為台灣民主發展的重要象徵。"
+  },
+  {
+    text:"牆上貼著一家人的照片，但臉被劃掉。",
+    anomaly:true,
+    title:"林宅血案",
+    short:"政治暴力與未解懸案。",
+    detail:"1980年林義雄家中發生滅門血案，至今仍未完全釐清真相，被視為台灣歷史上的重大政治案件。"
+  },
+  {
+    text:"走廊安靜無聲。",
+    anomaly:false
+  },
+  {
+    text:"燈光微微閃爍。",
+    anomaly:false
+  }
 ];
 
 let currentScene = null;
-
-let audioCtx;
-function startAudio(){
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  let osc = audioCtx.createOscillator();
-  let gain = audioCtx.createGain();
-
-  osc.type = "sine";
-  osc.frequency.value = 40;
-  gain.gain.value = 0.02;
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start();
-}
+let showInfo = false;
 
 function nextScene(){
   currentScene = pool[Math.floor(Math.random()*pool.length)];
   document.getElementById("scene").innerText = currentScene.text;
   document.getElementById("level").innerText = level;
+  document.getElementById("info").style.display = "none";
 }
 
 function choose(answer){
-  if(!audioCtx) startAudio();
-
   let correct = currentScene.anomaly;
 
   if(answer === !correct){
     level++;
-
-    document.body.style.background = "white";
-    setTimeout(()=>document.body.style.background="black",100);
-
     if(level > total){
       endGame();
     }else{
       nextScene();
     }
-
   }else{
-    failEffect();
+    alert("你忽略了異常…歷史再次重演");
+    level = 1;
+    nextScene();
   }
 }
 
-function failEffect(){
-  document.body.style.background = "red";
-  if(navigator.vibrate){
-    navigator.vibrate(200);
-  }
+function toggleInfo(){
+  if(!currentScene.title) return;
 
-  setTimeout(()=>{
-    alert("你做出了錯誤的判斷…一切重來");
-    level = 1;
-    nextScene();
-    document.body.style.background = "black";
-  },300);
+  let box = document.getElementById("info");
+
+  if(box.style.display === "none"){
+    box.style.display = "block";
+    box.innerHTML = `
+      <h3>${currentScene.title}</h3>
+      <p><b>簡述：</b>${currentScene.short}</p>
+      <p><b>詳細：</b>${currentScene.detail}</p>
+    `;
+  }else{
+    box.style.display = "none";
+  }
 }
 
 function endGame(){
   document.body.innerHTML = `
     <div style="padding:40px;text-align:center;">
-      <h1>你走出了走廊</h1>
-      <p>但你開始懷疑，曾經的『正常』是否只是被塑造的。</p>
+      <h1>你離開了走廊</h1>
+      <p>但歷史從未真正消失，只是等待被遺忘。</p>
       <button onclick="location.reload()">再玩一次</button>
     </div>
   `;
